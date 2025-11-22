@@ -46,7 +46,7 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+void incrementSystemTime();
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
