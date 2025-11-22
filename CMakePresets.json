@@ -2,13 +2,24 @@
     "version": 3,
     "configurePresets": [
         {
+            "name": "host-tests",
+            "displayName": "Host Unit Tests",
+            "description": "Build tests using host compiler",
+            "binaryDir": "${sourceDir}/build/tests",
+            "generator": "Ninja",
+            "cacheVariables": {
+              "CMAKE_BUILD_TYPE": "Debug",
+              "TESTS_ENABLED": "ON"
+            }
+        },
+        {
             "name": "default",
             "hidden": true,
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build/${presetName}",
 		    "toolchainFile": "${sourceDir}/cmake/gcc-arm-none-eabi.cmake",
             "cacheVariables": {
-                
+                "TESTS_ENABLED": "OFF"
             }
         },
         {

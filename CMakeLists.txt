@@ -16,11 +16,6 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
 
-set(SOURCE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src)
-set(SOURCES
-    ${SOURCE_PATH}/SystemTime.cpp
-)
-
 # Define the build type
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Debug")
@@ -39,38 +34,41 @@ message("Build type: " ${CMAKE_BUILD_TYPE})
 # Enable CMake support for ASM and C languages
 enable_language(C CXX ASM)
 
-# Create an executable object type
-add_executable(${CMAKE_PROJECT_NAME})
+add_subdirectory(utils)
 
-# Add STM32CubeMX generated sources
-add_subdirectory(cmake/stm32cubemx)
+if(CMAKE_CROSSCOMPILING AND NOT TESTS_ENABLED )
+    message(STATUS "Build type: Firmware (STM32 Target)")
 
-# Link directories setup
-target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined library search paths
-)
+    enable_language(C CXX ASM)
+    
+    set(SOURCE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src)
+    set(SOURCES
+        ${SOURCE_PATH}/MCUSerial.cpp
+    )
 
-# Add sources to executable
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE
-    ${SOURCES}
-)
+    # Create the firmware executable
+    add_executable(${CMAKE_PROJECT_NAME})
 
-# Add include paths
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined include paths
-)
+    # STM32 Specific definitions
+    add_subdirectory(cmake/stm32cubemx)
 
-# Add project symbols (macros)
-target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined symbols
-)
+    # Add sources to executable
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${SOURCES})
 
-# Remove wrong libob.a library dependency when using cpp files
-list(REMOVE_ITEM CMAKE_C_IMPLICIT_LINK_LIBRARIES ob)
+    # Remove wrong libob.a library dependency when using cpp files
+    list(REMOVE_ITEM CMAKE_C_IMPLICIT_LINK_LIBRARIES ob)
+    
+    # Link libraries
+    target_link_libraries(${CMAKE_PROJECT_NAME} stm32cubemx utils)
+    
+    add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+        COMMAND arm-none-eabi-objcopy -O ihex ${CMAKE_PROJECT_NAME}.elf ${CMAKE_PROJECT_NAME}.hex 
+    )
+    add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+        COMMAND arm-none-eabi-size ${CMAKE_PROJECT_NAME}.hex
+    )
 
-# Add linked libraries
-target_link_libraries(${CMAKE_PROJECT_NAME}
-    stm32cubemx
-
-    # Add user defined libraries
-)
+else()
+    message(STATUS "Build type: Unit Tests (Host Target)")
+    add_subdirectory(tests)
+endif()

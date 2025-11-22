@@ -23,6 +23,8 @@ extern "C" {
   #include <assert.h>
 }
 
+#include "MCUSerial.hpp"
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "SystemTime.hpp"

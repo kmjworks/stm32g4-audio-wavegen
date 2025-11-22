@@ -18,7 +18,7 @@ namespace internal {
 
 
 
-MCUSerial::MCUSerial(const Parity& initParity, const BaudRate& initBaud) : currentParity(initParity), currentBaud(initBaud) {
+MCUSerial::MCUSerial(USART_TypeDef* usartHandle) : usartInternal(usartHandle) {
     // WIP
 }
 
@@ -30,6 +30,7 @@ void MCUSerial::receive() {
 
 }
 
-void MCUSerial::reconfigure(const Parity& newParity, const BaudRate& newBaud) {
+void MCUSerial::checkAndProcess() {
+    // e.g. DMAController->getAvailableDataBytes()
     
 }

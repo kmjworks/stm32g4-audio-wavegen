@@ -1,5 +1,7 @@
 #pragma once
 #include "Serial.hpp"
+#include "stm32g4xx_ll_usart.h"
+#include <structures/RBuffer.hpp>
 #include <cstddef>
 
 namespace internal {
@@ -11,15 +13,12 @@ namespace internal {
 
 class MCUSerial : public ISerial {
     public:
-        MCUSerial(const Parity& initParity, const BaudRate& initBaud);
+        MCUSerial(USART_TypeDef* usartHandle);
         void write(const uint8_t* data) override;
         void receive() override;
-        void reconfigure(const Parity& newParity, const BaudRate& newBaud) override;
+        void checkAndProcess();
 
     private:
-        Parity currentParity;
-        BaudRate  currentBaud;
-        
-
+        USART_TypeDef* usartInternal; 
 
 };
