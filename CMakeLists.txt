@@ -18,8 +18,7 @@ set(CMAKE_CXX_EXTENSIONS ON)
 
 set(SOURCE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src)
 set(SOURCES
-    ${SOURCE_PATH}/MCUSerial.cpp
-    ${SOURCE_PATH}/Serial.cpp
+    ${SOURCE_PATH}/SystemTime.cpp
 )
 
 # Define the build type

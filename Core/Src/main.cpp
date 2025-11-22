@@ -20,11 +20,13 @@
 
 extern "C" {
   #include "main.h"
+  #include <assert.h>
 }
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "SystemTime.hpp"
+#include <memory>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -60,7 +62,7 @@ static void MX_USART2_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-MCUSerial serial = MCUSerial(Parity::NONE, BaudRate::BAUD_115200); 
+std::shared_ptr<SystemTime> time = std::make_shared<SystemTime>();
 /* USER CODE END 0 */
 
 /**
@@ -105,6 +107,7 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
+  assert(LL_SYSTICK_IsEnabledIT() == true);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -160,8 +163,8 @@ void SystemClock_Config(void)
   LL_RCC_SetAPB2Prescaler(LL_RCC_APB2_DIV_1);
 
   LL_Init1msTick(170000000);
-
   LL_SetSystemCoreClock(170000000);
+  LL_SYSTICK_EnableIT();
 }
 
 /**
@@ -428,7 +431,9 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+void incrementSystemTime() {
+  time->tick();
+}
 /* USER CODE END 4 */
 
 /**
