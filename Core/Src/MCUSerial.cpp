@@ -1,11 +1,12 @@
 #include "MCUSerial.hpp"
 
+#include <cstring>
 #include <utility>
 #include "DMAController.hpp"
 
 namespace internal {
     namespace error_detection {
-        uint16_t crc16Ccitt(uint8_t* data, size_t size) {
+        uint16_t crc16Ccitt(const uint8_t* data, size_t size) {
             uint8_t x;
             uint16_t crc = 0xFFF;
 
@@ -72,14 +73,23 @@ MCUSerial::MCUSerial(USART_TypeDef* usartHandle, IFrameReceiver* rawDataReceiver
     auto addr = (uint32_t)(uintptr_t)rxBuffer.getRawBuffer();
     
     dmaRx->changeDestinationAndDataLength(addr, rxBuffer.getInternalSize());
-    dmaRx->enable();
+    
+    // Without a receiver to handle packetizing, MCUSerial is useless because all we would receive are raw bytes
+    if (receiver) {
+        dmaRx->enable();
+    } 
 
     LL_USART_EnableDMAReq_RX(usartInternal);
     LL_USART_EnableDMAReq_TX(usartInternal);
 }
 
 void MCUSerial::write(const uint8_t* dat) {
-    
+    if (dat == nullptr) {
+        return;
+    }
+
+    const size_t length = std::strlen(reinterpret_cast<const char*>(dat));
+    write(dat, length);
 }
 
 void MCUSerial::write(const uint8_t* data, size_t length) {
@@ -95,6 +105,10 @@ void MCUSerial::write(const uint8_t* data, size_t length) {
 
 void MCUSerial::receive() {
     checkAndProcess();
+}
+
+void MCUSerial::reconfigure(const Parity& /*newParity*/, const BaudRate& /*newBaud*/) {
+    return;
 }
 
 

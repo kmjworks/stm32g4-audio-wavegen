@@ -14,7 +14,7 @@ size_t DMAController::getCurrentWritePos() {
 
 bool DMAController::changeDestinationAndDataLength(uint32_t destination, size_t size) {
     if (isEnabled) {
-        return (not isEnabled);
+        return false;
     }
 
     bufferSize = size;

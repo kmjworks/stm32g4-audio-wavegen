@@ -8,11 +8,11 @@
 
 #include "stm32g4xx_ll_usart.h"
 
-#define MAX_SIZE 514+2+3 
+#define MAX_SIZE 514+2+3+1
 
 namespace internal {
     namespace error_detection {
-        uint16_t crc16Ccitt(uint8_t* data, size_t size);
+        uint16_t crc16Ccitt(const uint8_t* data, size_t size);
     }
 
     namespace COBS {
@@ -29,8 +29,9 @@ class MCUSerial : public ISerial {
         [[deprecated("Prefer the overloaded method ::write(const uint8_t* data, size_t length)")]]
         void write(const uint8_t* data) override;
         
-        void write(const uint8_t* data, size_t length);
+        void write(const uint8_t* data, size_t length) override;
         void receive() override;
+        void reconfigure(const Parity& newParity, const BaudRate& newBaud) override;
 
         bool isTxBusy();
     private:

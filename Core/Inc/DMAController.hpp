@@ -1,4 +1,5 @@
 #pragma once
+#include <cstddef>
 #include "IDMA.hpp"
 #include "stm32g4xx_ll_dma.h"
 
