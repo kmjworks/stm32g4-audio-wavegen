@@ -44,6 +44,9 @@ if(CMAKE_CROSSCOMPILING AND NOT TESTS_ENABLED )
     set(SOURCE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src)
     set(SOURCES
         ${SOURCE_PATH}/MCUSerial.cpp
+        ${SOURCE_PATH}/Packetizer.cpp
+        ${SOURCE_PATH}/DMAController.cpp
+        ${SOURCE_PATH}/SystemTime.cpp
     )
 
     # Create the firmware executable
