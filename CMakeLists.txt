@@ -47,6 +47,7 @@ if(CMAKE_CROSSCOMPILING AND NOT TESTS_ENABLED )
         ${SOURCE_PATH}/Packetizer.cpp
         ${SOURCE_PATH}/DMAController.cpp
         ${SOURCE_PATH}/SystemTime.cpp
+        ${SOURCE_PATH}/ProtocolHandler.cpp
     )
 
     # Create the firmware executable

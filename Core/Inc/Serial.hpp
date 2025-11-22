@@ -27,7 +27,7 @@ class ISerial {
         }
 
         virtual void receive() = 0;
-        virtual void reconfigure(const Parity& newParity, const BaudRate& newBaud) = 0;
+        virtual bool isTxBusy() const = 0;
 
         ~ISerial() = default;
 };

@@ -26,10 +26,12 @@ extern "C" {
 #include "MCUSerial.hpp"
 #include "Packetizer.hpp"
 #include "DMAController.hpp"
+#include "ProtocolHandler.hpp"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "SystemTime.hpp"
+#include <structures/RBuffer.hpp>
 #include <memory>
 /* USER CODE END Includes */
 
@@ -61,17 +63,11 @@ static void MX_DMA_Init(void);
 static void MX_DAC1_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
-RBuffer<uint8_t> buffer = RBuffer<uint8_t>(MAX_SIZE);
-std::shared_ptr<DMAController> dmaTx = std::make_shared<DMAController>(DMA1, LL_DMA_CHANNEL_2, (uint32_t)(uintptr_t)nullptr, 0);
-std::shared_ptr<DMAController> dmaRx = std::make_shared<DMAController>(DMA1, LL_DMA_CHANNEL_1, (uint32_t)(uintptr_t)buffer.getRawBuffer(), buffer.getInternalSize());
-
-// rawDataReceiver no existing impl WIP
-MCUSerial serial = MCUSerial(USART2, nullptr, buffer, dmaRx, dmaTx);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-std::shared_ptr<SystemTime> time = std::make_shared<SystemTime>();
+SystemTime sysTime = SystemTime();
 /* USER CODE END 0 */
 
 /**
@@ -115,7 +111,18 @@ int main(void)
   MX_DAC1_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+  
 
+  RBuffer<uint8_t> buffer(MAX_SIZE);
+  auto dmaTx = std::make_shared<DMAController>(DMA1, LL_DMA_CHANNEL_2, (uint32_t)(uintptr_t)nullptr, 0);
+  auto dmaRx = std::make_shared<DMAController>(DMA1, LL_DMA_CHANNEL_1, (uint32_t)(uintptr_t)buffer.getRawBuffer(), buffer.getInternalSize());
+
+  MCUSerial serial(USART2, buffer, dmaRx, dmaTx);
+  ProtocolHandler protocolHandler(sysTime);
+  Packetizer packetizer(serial);
+
+  protocolHandler.setPacketizer(&packetizer);
+  serial.setReceiver(&packetizer);
 
   assert(LL_SYSTICK_IsEnabledIT() == true);
   /* USER CODE END 2 */
@@ -127,6 +134,8 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    serial.receive();
+    protocolHandler.sendPeriodicFeedback();
   }
   /* USER CODE END 3 */
 }
@@ -441,8 +450,11 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void incrementSystemTime() {
-  time->tick();
+extern "C" void incrementSystemTime() {
+  SystemTime* time = &sysTime;
+  if (time != nullptr) {
+    time->tick();
+  }
 }
 /* USER CODE END 4 */
 

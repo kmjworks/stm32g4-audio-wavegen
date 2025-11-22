@@ -9,12 +9,13 @@ class DMAController : public IDMA {
 
         size_t getCurrentWritePos() override;
         bool changeDestinationAndDataLength(uint32_t destination, size_t size) override;
+        void setPeripheralAddress(uint32_t address) override;
         void enable() override;
         void disable() override;
+        bool isBusy() const override;
 
     private:
         DMA_TypeDef* dma;
         uint32_t ch;
         size_t bufferSize;
-        volatile bool isEnabled;
 };
