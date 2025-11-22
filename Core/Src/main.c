@@ -18,9 +18,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 
-extern "C" {
-  #include "main.h"
-}
+#include "main.h"
+
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -60,7 +59,6 @@ static void MX_USART2_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-MCUSerial serial = MCUSerial(Parity::NONE, BaudRate::BAUD_115200); 
 /* USER CODE END 0 */
 
 /**

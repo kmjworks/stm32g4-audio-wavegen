@@ -1,0 +1,24 @@
+{
+    "version": "0.1.0",
+    "configurations": [
+      {
+        "name": "ST-Link",
+        "cwd": "${workspaceFolder}",
+        "executable": "${command:cmake.launchTargetPath}",
+        "request": "launch",
+        "type": "cortex-debug",
+        "servertype": "stlink",
+        "interface": "swd",
+        "showDevDebugOutput": "both",
+        "v1": false,                            
+        "device": "STM32G431CBU3",                
+        "serialNumber": "003400223233510A39363634",                     // Set ST-Link ID if you use multiple at the same time [optional]
+        "runToEntryPoint": "main",              // Run to main and stop there [optional]
+
+        // 003400223233510A39363634
+
+        //"servertype": "stlink",  will try to run command "STM32_Programmer_CLI", "ST-LINK_gdbserver", and  which must exist in your system PATH.
+      }
+    ]
+  }
+  
