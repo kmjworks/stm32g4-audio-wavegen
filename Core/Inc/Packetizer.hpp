@@ -19,6 +19,7 @@ class Packetizer : public IFrameReceiver {
         bool sendFeedback(const FeedbackPacket& packet);
         bool sendAck(Command ackedPacket, uint8_t counter);
         bool sendNack(Command ackedPacket, uint8_t counter);
+        bool isTransmitBusy() const;
 
     private:
         template <typename T>

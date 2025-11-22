@@ -1,6 +1,7 @@
 #pragma once
 #include <cstddef>
 #include <array>
+#include <memory>
 #include "Serial.hpp"
 #include "IDMA.hpp"
 #include "IFrameReceiver.hpp"
@@ -24,16 +25,16 @@ namespace internal {
 
 class MCUSerial : public ISerial {
     public:
-        MCUSerial(USART_TypeDef* usartHandle, IFrameReceiver* rawDataReceiver, RBuffer<uint8_t>& buffer, std::shared_ptr<IDMA> dmaCtrlRx, std::shared_ptr<IDMA> dmaCtrlTx);
+        MCUSerial(USART_TypeDef* usartHandle, RBuffer<uint8_t>& buffer, std::shared_ptr<IDMA> dmaCtrlRx, std::shared_ptr<IDMA> dmaCtrlTx);
 
         [[deprecated("Prefer the overloaded method ::write(const uint8_t* data, size_t length)")]]
         void write(const uint8_t* data) override;
         
         void write(const uint8_t* data, size_t length) override;
         void receive() override;
-        void reconfigure(const Parity& newParity, const BaudRate& newBaud) override;
 
-        bool isTxBusy();
+        void setReceiver(IFrameReceiver* newReceiver);
+        bool isTxBusy() const override;
     private:
         void checkAndProcess();
 

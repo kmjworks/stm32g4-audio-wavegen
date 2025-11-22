@@ -6,8 +6,8 @@ class SystemTime {
         SystemTime();
         ~SystemTime() = default;
         void tick();
-        int64_t getTick;
+        uint32_t getTick() const;
 
     private:
-        int64_t sinceBootMs;
+        volatile uint32_t sinceBootMs;
 };

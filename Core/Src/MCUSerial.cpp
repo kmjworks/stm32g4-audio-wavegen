@@ -26,6 +26,9 @@ namespace internal {
 
             while (input < end) {
                 int code = *input++;
+                if (code == 0) {
+                    return 0;
+                }
                 if (input + code - 1 > end) {
                     return 0;
                 }
@@ -43,24 +46,27 @@ namespace internal {
         }
 
         size_t encode(const uint8_t* input, size_t length, uint8_t* out) {
-            size_t writeIndex = 0, codeIndex = 0, nextDelimiterIndex = 0;
-
-            out[writeIndex++] = 0;
-
+            size_t writeIndex = 1;
+            size_t codeIndex = 0;
+            uint8_t code = 1;
 
             for (size_t i = 0; i < length; ++i) {
                 if (input[i] == 0) {
-                    out[codeIndex] = (i - nextDelimiterIndex) + 1;
-                    codeIndex = writeIndex;
-
-                    out[writeIndex++] = 0;
-                    nextDelimiterIndex = i++;
+                    out[codeIndex] = code;
+                    codeIndex = writeIndex++;
+                    code = 1;
                 } else {
                     out[writeIndex++] = input[i];
+                    code++;
+                    if (code == 0xFF) {
+                        out[codeIndex] = code;
+                        codeIndex = writeIndex++;
+                        code = 1;
+                    }
                 }
             }
 
-            out[codeIndex] = (length - nextDelimiterIndex) + 1;
+            out[codeIndex] = code;
             return writeIndex;
         }
     }
@@ -68,16 +74,18 @@ namespace internal {
 
 
 
-MCUSerial::MCUSerial(USART_TypeDef* usartHandle, IFrameReceiver* rawDataReceiver, RBuffer<uint8_t>& buffer, std::shared_ptr<IDMA> dmaCtrlRx, std::shared_ptr<IDMA> dmaCtrlTx) 
-: usartInternal(usartHandle), receiver(rawDataReceiver), dmaRx(std::move(dmaCtrlRx)), dmaTx(std::move(dmaCtrlTx)), rxBuffer(buffer), rxBufDelimiterFoundIndex(0)  {
+MCUSerial::MCUSerial(USART_TypeDef* usartHandle, RBuffer<uint8_t>& buffer, std::shared_ptr<IDMA> dmaCtrlRx, std::shared_ptr<IDMA> dmaCtrlTx) 
+: usartInternal(usartHandle), dmaRx(std::move(dmaCtrlRx)), dmaTx(std::move(dmaCtrlTx)), rxBuffer(buffer), rxBufDelimiterFoundIndex(0)  {
+    const uint32_t rxPeriphAddr = LL_USART_DMA_GetRegAddr(usartInternal, LL_USART_DMA_REG_DATA_RECEIVE);
+    const uint32_t txPeriphAddr = LL_USART_DMA_GetRegAddr(usartInternal, LL_USART_DMA_REG_DATA_TRANSMIT);
+
     auto addr = (uint32_t)(uintptr_t)rxBuffer.getRawBuffer();
     
+    dmaRx->setPeripheralAddress(rxPeriphAddr);
     dmaRx->changeDestinationAndDataLength(addr, rxBuffer.getInternalSize());
-    
-    // Without a receiver to handle packetizing, MCUSerial is useless because all we would receive are raw bytes
-    if (receiver) {
-        dmaRx->enable();
-    } 
+    dmaRx->enable();
+
+    dmaTx->setPeripheralAddress(txPeriphAddr);
 
     LL_USART_EnableDMAReq_RX(usartInternal);
     LL_USART_EnableDMAReq_TX(usartInternal);
@@ -93,9 +101,15 @@ void MCUSerial::write(const uint8_t* dat) {
 }
 
 void MCUSerial::write(const uint8_t* data, size_t length) {
-    if (length > txDmaBuffer.size() or length == 0) {
+    if (data == nullptr || length > txDmaBuffer.size() || length == 0) {
         return;
     }
+
+    if (dmaTx->isBusy()) {
+        return;
+    }
+
+    dmaTx->disable();
 
     memcpy(txDmaBuffer.data(), data, length);
 
@@ -107,13 +121,13 @@ void MCUSerial::receive() {
     checkAndProcess();
 }
 
-void MCUSerial::reconfigure(const Parity& /*newParity*/, const BaudRate& /*newBaud*/) {
-    return;
+
+bool MCUSerial::isTxBusy() const {
+    return dmaTx->isBusy();
 }
 
-
-bool MCUSerial::isTxBusy() {
-    return false;
+void MCUSerial::setReceiver(IFrameReceiver* newReceiver) {
+    receiver = newReceiver;
 }
 
 void MCUSerial::checkAndProcess() {
@@ -125,7 +139,9 @@ void MCUSerial::checkAndProcess() {
     while (rxBuffer.pop(&byte, 1)) {
         if (byte == 0x00) {
             if (rxBufDelimiterFoundIndex > 0) {
-                receiver->onCompleteRawFrameReceived(rxBufDelimiterFound.data(), rxBufDelimiterFoundIndex);
+                if (receiver != nullptr) {
+                    receiver->onCompleteRawFrameReceived(rxBufDelimiterFound.data(), rxBufDelimiterFoundIndex);
+                }
             }
 
             rxBufDelimiterFoundIndex = 0;

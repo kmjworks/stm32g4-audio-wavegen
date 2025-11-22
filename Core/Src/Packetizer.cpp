@@ -73,6 +73,10 @@ bool Packetizer::sendNack(Command ackedPacket, uint8_t counter) {
     return sendPacket(packet);
 }
 
+bool Packetizer::isTransmitBusy() const {
+    return serial.isTxBusy();
+}
+
 bool Packetizer::dispatchPayload(const Command command, const uint8_t* payload, size_t payloadSize) {
     if (payload == nullptr) {
         return false;
@@ -125,6 +129,10 @@ bool Packetizer::sendPacket(const T& packet) {
     constexpr size_t payloadSize = sizeof(T);
     static_assert(payloadSize + CRC_SIZE <= MAX_PACKET_SIZE, "Payload exceeds configured maximum packet size");
 
+    if (serial.isTxBusy()) {
+        return false;
+    }
+
     if ((payloadSize + CRC_SIZE + 1) > txBuffer.size()) {
         return false;
     }
@@ -145,7 +153,7 @@ bool Packetizer::sendPacket(const T& packet) {
     return true;
 }
 
-// Explicit template instantiations for the packet types used by the protocol
+
 template bool Packetizer::sendPacket<ACKPacket>(const ACKPacket& packet);
 template bool Packetizer::sendPacket<NACKPacket>(const NACKPacket& packet);
 template bool Packetizer::sendPacket<FeedbackPacket>(const FeedbackPacket& packet);
